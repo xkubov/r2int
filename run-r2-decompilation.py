@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""The script decompiles the given file via RetDec R2 plugin.
+The supported decompilation modes are:
+   /TODO/ full      - decompile entire input file.
+   selective - decompile only the function selected by the given address.
+"""
+
 import argparse
 import os
 import shutil
