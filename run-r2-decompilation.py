@@ -7,6 +7,19 @@ import sys
 
 import r2pipe
 
+
+class WorkingDirectory:
+    def __init__(self, path):
+        self.old_path = os.getcwd()
+        self.path = path
+
+    def __enter__(self):
+        os.chdir(self.path)
+
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.old_path)
+
+
 def print_error_and_die(*msg):
     print('Error:', *msg)
     sys.exit(1)
@@ -29,6 +42,12 @@ def parse_args(args):
                         dest='selected_addr',
                         help='Decompile only the function selected by the given address (any address inside function). Examples: 0x1000, 4096.')
 
+    parser.add_argument('-p', '--project',
+                        dest='project_path',
+                        metavar='FILE',
+                        help='R2 project associated with input file.')
+
+
     return parser.parse_args(args)
 
 
@@ -36,6 +55,9 @@ def check_args(args):
     if not args.file or not os.path.exists(args.file):
         print_error_and_die('Specified input file does not exist:', args.file)
     args.file_dir = os.path.dirname(args.file)
+
+    if args.project_path and not os.path.exists(args.project_path):
+            print_error_and_die('Specified R2 project file does not exist:', args.project_path)
 
     if not args.output:
         args.output = args.file + '.c'
@@ -49,26 +71,38 @@ def main():
     args = parse_args(sys.argv[1:])
     check_args(args)
 
-    if args.file_dir != args.output_dir:
-        shutil.copy(args.file, args.output_dir)
-#        args.file = os.path.join(args.output_dir, os.path.basename(args.file))
+    with WorkingDirectory(args.file_dir):
+        if args.file_dir != args.output_dir:
+            shutil.copy(args.file, args.output_dir)
 
-    r2 = r2pipe.open(args.file)
-    r2.cmd('aaa')
+        if args.project_path and os.path.dirname(args.project_path) != args.output_dir:
+            shutil.copy(args.project_path, args.output_dir)
 
-    if args.selected_addr:
-        r2.cmd('s ' + args.selected_addr)
+        r2 = r2pipe.open(args.file)
 
-    else:
-        r2.cmd('s sym.main')
-        r2.cmd('s main')
+        if args.project_path:
+            r2.cmd('Po ' + args.project_path)
+            sys.stderr.write("Loaded projects; Functions in project:")
+            sys.stderr.write("===================")
+            sys.stderr.write(r2.cmd('afl'))
+            sys.stderr.write("===================")
 
-    out = r2.cmd('#!pipe r2retdec -p')
+        else:
+            r2.cmd('aaa')
 
-    r2.quit()
+        if args.selected_addr:
+            r2.cmd('s ' + args.selected_addr)
 
-    with open(args.output, "w") as f:
-        f.write(out)
+        else:
+            r2.cmd('s sym.main')
+            r2.cmd('s main')
+
+        out = r2.cmd('#!pipe r2retdec -p')
+
+        r2.quit()
+
+        with open(args.output, "w") as f:
+            f.write(out)
 
     return 0
 
