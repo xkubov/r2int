@@ -53,7 +53,6 @@ def parse_args(args):
                         metavar='FILE',
                         help='R2 project associated with input file.')
 
-
     return parser.parse_args(args)
 
 
@@ -88,10 +87,6 @@ def main():
 
         if args.project_path:
             r2.cmd('Po ' + args.project_path)
-            sys.stderr.write("Loaded projects; Functions in project:")
-            sys.stderr.write("===================")
-            sys.stderr.write(r2.cmd('afl'))
-            sys.stderr.write("===================")
 
         else:
             r2.cmd('aaa')
@@ -103,12 +98,16 @@ def main():
             r2.cmd('s sym.main')
             r2.cmd('s main')
 
-        out = r2.cmd('#!pipe r2retdec -p')
+        out = r2.cmd('#!pipe r2retdec')
 
         r2.quit()
 
-        with open(args.output, "w") as f:
-            f.write(out)
+        try:
+            with open(args.output, "w") as f:
+                f.write(out)
+
+        except Exception as e:
+            sys.stderr.write('Unable to open file '+str(e))
 
     return 0
 
