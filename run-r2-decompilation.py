@@ -104,10 +104,6 @@ def main():
         if args.selected_addr:
             r2.cmd('s ' + args.selected_addr)
 
-        else:
-            r2.cmd('s sym.main')
-            r2.cmd('s main')
-
         out = r2.cmd('#!pipe r2retdec')
 
         r2.quit()
