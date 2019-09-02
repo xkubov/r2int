@@ -53,6 +53,11 @@ def parse_args(args):
                         metavar='FILE',
                         help='R2 project associated with input file.')
 
+    parser.add_argument('-c', '--cmds',
+                        dest='commands',
+                        metavar='CMD1;CMD2;CMD3...',
+                        help='Inital R2 commands separated by colomn.')
+
     return parser.parse_args(args)
 
 
@@ -90,6 +95,11 @@ def main():
 
         else:
             r2.cmd('aaa')
+
+        if args.commands:
+            cmds = args.commands.split(';')
+            for cmd in cmds:
+                r2.cmd(cmd)
 
         if args.selected_addr:
             r2.cmd('s ' + args.selected_addr)
