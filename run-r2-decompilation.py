@@ -56,7 +56,7 @@ def parse_args(args):
     parser.add_argument('-c', '--cmds',
                         dest='commands',
                         metavar='CMD1;CMD2;CMD3...',
-                        help='Inital R2 commands separated by colomn.')
+                        help='Inital R2 commands separated by semicolon.')
 
     return parser.parse_args(args)
 
@@ -98,8 +98,20 @@ def main():
 
         if args.commands:
             cmds = args.commands.split(';')
+            joining = ''
+
             for cmd in cmds:
-                r2.cmd(cmd)
+                if joining:
+                    joining += ";"+cmd
+                    if cmd[-1] == '"':
+                        r2.cmd(joining)
+                        joining = ''
+
+                elif cmd[0] == '"' and cmd[-1] != '"':
+                    joining = cmd
+
+                else:
+                    r2.cmd(cmd)
 
         if args.selected_addr:
             r2.cmd('s ' + args.selected_addr)
